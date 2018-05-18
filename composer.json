@@ -1,0 +1,8 @@
+{
+  "name": "audiologyholdings/elastic-search-index",
+  "description": "CakePHP Plugin to facilitate full text indexing across any Model via ElasticSearch",
+  "type": "cakephp-plugin",
+  "require": {
+    "cakephp/cakephp": ">=2.5.5.4 <3.0.0"
+  }
+}
