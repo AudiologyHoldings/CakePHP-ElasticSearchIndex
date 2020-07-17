@@ -123,8 +123,6 @@ class ElasticSearchIndexableBehaviorTest extends CakeTestCase {
 	public function setUpIndex($setupRecords = true) {
 		$this->ESR->createIndex($this->ESR->_config['index']);
 		$request = array('table' => $this->table);
-		$ElasticSearchIndexableBehavior = new ElasticSearchIndexableBehavior();
-		$this->ESR->createMapping($ElasticSearchIndexableBehavior->mapping, $request);
 		if (empty($setupRecords)) {
 			return;
 		}

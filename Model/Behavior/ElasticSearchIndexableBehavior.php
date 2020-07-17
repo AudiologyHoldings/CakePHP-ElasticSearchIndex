@@ -142,10 +142,9 @@ class ElasticSearchIndexableBehavior extends ModelBehavior {
 			throw new ElasticSearchIndexException('Missing the "table" configuration - this should be automatic based on Model->useTable');
 		}
 		$config['index'] .= '_'.$config['table']; ##ES 6 did away with type mapping.  Need to  make separate indexes per data type
-		// autosetup index & table mapping
+		// auto setup index
 		if (!Cache::read("elasticsearchindexablebehavior_setup_{$config['table']}", 'default')) {
 			$this->autoSetupElasticSearchIndex($config);
-			$this->autoSetupElasticSearchMapping($config);
 			Cache::write("elasticsearchindexablebehavior_setup_{$config['table']}", true, 'default');
 		}
 		$this->ElasticSearchRequests[$Model->alias] = $this->ElasticSearchRequest;
@@ -316,7 +315,16 @@ class ElasticSearchIndexableBehavior extends ModelBehavior {
 		// setup data to save
 		$model = $Model->alias;
 		$modified = date('Y-m-d H:i:s');
-		$save = compact('id', 'model', 'association_key', 'data', 'created', 'modified');
+        $save = array_filter(
+            [
+                'id'              => $id ?? null,
+                'model'           => $model ?? null,
+                'association_key' => $association_key ?? null,
+                'data'            => $data ?? null,
+                'created'         => $created ?? null,
+                'modified'        => $modified ?? null,
+            ]
+        );
 		// save
 		if (!empty($id) && $this->ElasticSearchRequest->exists($id)) {
 			$id = $this->ElasticSearchRequest->updateRecord($id, $save);
@@ -705,21 +713,6 @@ class ElasticSearchIndexableBehavior extends ModelBehavior {
 			throw new CakeException("The 'index' is not configured");
 		}
 		return $this->ElasticSearchRequest->createIndex($request['index'], $request);
-	}
-
-	/**
-	 * If you have never set up this table in ElasticSearch before,
-	 * we need to do so...
-	 *
-	 */
-	public function autoSetupElasticSearchMapping($request) {
-		if (empty($request['index'])) {
-			throw new CakeException("The 'index' is not configured");
-		}
-		if (empty($request['table'])) {
-			throw new CakeException("The 'table' is not configured");
-		}
-		return $this->ElasticSearchRequest->createMapping($this->mapping, $request);
 	}
 
 	/**
