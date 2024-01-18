@@ -316,7 +316,13 @@ class ElasticSearchIndexableBehavior extends ModelBehavior {
 		// setup data to save
 		$model = $Model->alias;
 		$modified = date('Y-m-d H:i:s');
-		$save = compact('id', 'model', 'association_key', 'data', 'created', 'modified');
+		$save = compact('model', 'association_key', 'data', 'modified');
+        if(isset($created)) {
+            $save['created'] = $created;
+        }
+		if (isset($id)) {
+			$save['id'] = $id;
+		}
 		// save
 		if (!empty($id) && $this->ElasticSearchRequest->exists($id)) {
 			$id = $this->ElasticSearchRequest->updateRecord($id, $save);
