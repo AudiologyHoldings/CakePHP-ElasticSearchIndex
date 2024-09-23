@@ -96,6 +96,14 @@ class ElasticSearchIndexableBehavior extends ModelBehavior {
 		'modified' => array('type' => 'date', 'store' => false, 'format' => 'yyyy-MM-dd HH:mm:ss||yyyy/MM/dd'),
 	);
 
+	public $mapping_alt = [
+		'association_key' => array('type' => 'text', 'store' => true),
+		'model' => array('type' => 'text', 'store' => true, 'boost' => 0.2),
+		'data' => array('type' => 'text', 'store' => true),
+		'created' => array('type' => 'text', 'store' => false),
+		'modified' => array('type' => 'text', 'store' => false),
+	];
+
 	/**
 	 * Setup the model
 	 *
@@ -144,8 +152,10 @@ class ElasticSearchIndexableBehavior extends ModelBehavior {
 		$config['index'] .= '_'.$config['table']; ##ES 6 did away with type mapping.  Need to  make separate indexes per data type
 		// autosetup index & table mapping
 		if (!Cache::read("elasticsearchindexablebehavior_setup_{$config['table']}", 'default')) {
-			$this->autoSetupElasticSearchIndex($config);
-			$this->autoSetupElasticSearchMapping($config);
+			if ($this->autoSetupElasticSearchIndex($config)) {
+				// If created new, do mapping
+				$this->autoSetupElasticSearchMapping($config);
+			}
 			Cache::write("elasticsearchindexablebehavior_setup_{$config['table']}", true, 'default');
 		}
 		$this->ElasticSearchRequests[$Model->alias] = $this->ElasticSearchRequest;
@@ -725,7 +735,15 @@ class ElasticSearchIndexableBehavior extends ModelBehavior {
 		if (empty($request['table'])) {
 			throw new CakeException("The 'table' is not configured");
 		}
-		return $this->ElasticSearchRequest->createMapping($this->mapping, $request);
+
+		$mapping = $this->mapping;
+
+		// Special case for members on prod
+		if ($request['table'] == 'members') {
+			$mapping = $this->mapping_alt;
+		}
+
+		return $this->ElasticSearchRequest->createMapping($mapping, $request);
 	}
 
 	/**
