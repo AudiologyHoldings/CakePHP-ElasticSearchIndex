@@ -97,12 +97,23 @@ class ElasticSearchIndexableBehavior extends ModelBehavior {
 	);
 
 	public $mapping_alt = [
-		'association_key' => array('type' => 'text', 'store' => true),
-		'model' => array('type' => 'text', 'store' => true, 'boost' => 0.2),
-		'data' => array('type' => 'text', 'store' => true),
+		'association_key' => array('type' => 'text', 'store' => false),
+		'model' => array('type' => 'text', 'store' => false),
+		'data' => array('type' => 'text', 'store' => false),
 		'created' => array('type' => 'text', 'store' => false),
 		'modified' => array('type' => 'text', 'store' => false),
 	];
+
+	
+	/* // Default mapping ES created on its own on prod after switching to objectrocket
+	public $mapping_alt = [
+		'association_key' => array('type' => 'text', 'store' => false, 'fields' => ['keyword' => ['type' => 'keyword', 'ignore_above' => 256]]),
+		'model' => array('type' => 'text', 'store' => false, 'fields' => ['keyword' => ['type' => 'keyword', 'ignore_above' => 256]]),
+		'data' => array('type' => 'text', 'store' => false, 'fields' => ['keyword' => ['type' => 'keyword', 'ignore_above' => 256]]),
+		'created' => array('type' => 'text', 'store' => false, 'fields' => ['keyword' => ['type' => 'keyword', 'ignore_above' => 256]]),
+		'modified' => array('type' => 'text', 'store' => false, 'fields' => ['keyword' => ['type' => 'keyword', 'ignore_above' => 256]]),
+	];
+	*/
 
 	/**
 	 * Setup the model
@@ -351,7 +362,12 @@ class ElasticSearchIndexableBehavior extends ModelBehavior {
 	 */
 	public function getIndexId(Model $Model, $association_key) {
 		// setup ElasticSearchIndex Model
-		$records = $this->setupIndex($Model)->search("association_key:{$association_key}");
+		try {
+			$records = $this->setupIndex($Model)->search("association_key:{$association_key}");
+		} catch (Exception $e) {
+			return false;
+		}
+		
 		if (empty($records)) {
 			return false;
 		}
